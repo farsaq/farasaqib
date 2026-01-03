@@ -1,21 +1,29 @@
 import express from "express";
+import {
+  createCourse,
+  getCourses,
+  enrollCourse,
+} from "../controllers/courseController.js";
+
 import protect from "../middleware/authMiddleware.js";
 import adminOnly from "../middleware/roleMiddleware.js";
-import { createCourse, getCourses } from "../controllers/courseController.js";
+
 
 const router = express.Router();
-
+// public
 router.get("/", getCourses);
+
+// admin only
 router.post("/", protect, adminOnly, createCourse);
 
-export default router;
-import upload from "../middleware/uploadMiddleware.js";
-import { uploadVideo } from "../controllers/courseController.js";
+// logged-in user
+router.post("/:id/enroll", protect, enrollCourse);
 
-router.post(
-  "/upload-video",
-  protect,
-  adminOnly,
-  upload.single("video"),
-  uploadVideo
-);
+// public
+router.get("/", getCourses);
+
+// protected
+router.post("/", protect, createCourse);
+router.post("/:id/enroll", protect, enrollCourse);
+
+export default router;

@@ -1,39 +1,61 @@
 import Course from "../models/Course.js";
 
+// CREATE COURSE
 export const createCourse = async (req, res) => {
-  const { title, description } = req.body;
+  try {
+    const { title, description, instructor } = req.body;
 
-  const course = await Course.create({
-    title,
-    description,
-    createdBy: req.user._id,
-  });
+    if (!title || !description || !instructor) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-  res.status(201).json(course);
+    const course = await Course.create({
+      title,
+      description,
+      instructor,
+    });
+
+    res.status(201).json({
+      message: "Course created successfully",
+      course,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
 
+// GET ALL COURSES (PUBLIC)
 export const getCourses = async (req, res) => {
-  const courses = await Course.find();
-  res.json(courses);
+  try {
+    const courses = await Course.find();
+    res.status(200).json(courses);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };
-import cloudinary from "../config/cloudinary.js";
-import Course from "../models/Course.js";
 
-export const uploadVideo = async (req, res) => {
-  const { courseId, title } = req.body;
+// ENROLL COURSE (PROTECTED)
+export const enrollCourse = async (req, res) => {
+  try {
+    const course = await Course.findById(req.params.id);
 
-  const result = await cloudinary.uploader.upload(req.file.path, {
-    resource_type: "video",
-  });
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
 
-  const course = await Course.findById(courseId);
+    // avoid duplicate enroll
+    if (course.students.includes(req.user._id)) {
+      return res.status(400).json({ message: "Already enrolled" });
+    }
 
-  course.modules.push({
-    title,
-    videoUrl: result.secure_url,
-  });
+    course.students.push(req.user._id);
+    await course.save();
 
-  await course.save();
-
-  res.json({ message: "Video uploaded successfully" });
+    res.status(200).json({
+      message: "Enrolled successfully",
+      course,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
 };

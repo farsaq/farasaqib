@@ -1,17 +1,12 @@
-
 import express from "express";
-import { registerUser, loginUser } from "../controllers/userController.js";
 import protect from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/register", registerUser);
-router.post("/login", loginUser);
-
-// 🔐 PROTECTED ROUTE
+// 🔒 Protected route
 router.get("/profile", protect, (req, res) => {
   res.json({
-    success: true,
+    message: "Protected route accessed",
     user: req.user,
   });
 });
